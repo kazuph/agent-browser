@@ -223,7 +223,10 @@ pub fn parse_command(args: &[String], flags: &Flags) -> Result<Value, ParseError
             
             // Check for --load flag: wait --load networkidle
             if let Some(idx) = rest.iter().position(|&s| s == "--load" || s == "-l") {
-                let state = rest.get(idx + 1).unwrap_or(&"load");
+                let state = rest.get(idx + 1).ok_or_else(|| ParseError::MissingArguments {
+                    context: "wait --load".to_string(),
+                    usage: "wait --load <state>",
+                })?;
                 return Ok(json!({ "id": id, "action": "waitforloadstate", "state": state }));
             }
             
@@ -1153,6 +1156,13 @@ mod tests {
         let cmd = parse_command(&args("wait --load networkidle"), &default_flags()).unwrap();
         assert_eq!(cmd["action"], "waitforloadstate");
         assert_eq!(cmd["state"], "networkidle");
+    }
+
+    #[test]
+    fn test_wait_load_missing_state() {
+        let result = parse_command(&args("wait --load"), &default_flags());
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), ParseError::MissingArguments { .. }));
     }
 
     #[test]
