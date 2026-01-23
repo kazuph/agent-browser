@@ -8,6 +8,10 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     name: Release
@@ -199,6 +203,16 @@ jobs:
           done
           chmod +x bin/agent-browser-* 2>/dev/null || true
           ls -la bin/
+
+      - name: Verify binaries exist
+        run: |
+          BINARY_COUNT=$(ls bin/agent-browser-* 2>/dev/null | wc -l)
+          if [ "$BINARY_COUNT" -lt 5 ]; then
+            echo "Error: Expected 5 binaries, found $BINARY_COUNT"
+            ls -la bin/
+            exit 1
+          fi
+          echo "Found $BINARY_COUNT binaries"
 
       - name: Create GitHub Release
         run: |
