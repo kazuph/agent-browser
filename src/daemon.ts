@@ -248,12 +248,31 @@ export async function startDaemon(options?: {
             continue;
           }
 
-          // Auto-launch if not already launched and this isn't a launch/close/device_list command
+          // Handle device_list specially - it works without a session and always uses IOSManager
+          if (parseResult.command.action === 'device_list') {
+            const iosManager = new IOSManager();
+            try {
+              const devices = await iosManager.listDevices();
+              const response = {
+                id: parseResult.command.id,
+                success: true as const,
+                data: { devices },
+              };
+              socket.write(serializeResponse(response) + '\n');
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              socket.write(
+                serializeResponse(errorResponse(parseResult.command.id, message)) + '\n'
+              );
+            }
+            continue;
+          }
+
+          // Auto-launch if not already launched and this isn't a launch/close command
           if (
             !manager.isLaunched() &&
             parseResult.command.action !== 'launch' &&
-            parseResult.command.action !== 'close' &&
-            parseResult.command.action !== 'device_list'
+            parseResult.command.action !== 'close'
           ) {
             if (isIOS && manager instanceof IOSManager) {
               // Auto-launch iOS Safari

@@ -83,7 +83,7 @@ export async function executeIOSCommand(command: Command, manager: IOSManager): 
         const result = await manager.getSnapshot({
           interactive: cmd.interactive,
         });
-        return successResponse(id, { snapshot: result.tree });
+        return successResponse(id, { snapshot: result.tree, refs: result.refs });
       }
 
       case 'scroll': {

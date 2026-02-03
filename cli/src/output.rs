@@ -78,6 +78,28 @@ pub fn print_response(resp: &Response, json_mode: bool, action: Option<&str>) {
             );
             return;
         }
+        // iOS Devices
+        if let Some(devices) = data.get("devices").and_then(|v| v.as_array()) {
+            if devices.is_empty() {
+                println!("No iOS simulators available. Open Xcode to download simulator runtimes.");
+                return;
+            }
+            println!("Available iOS Simulators:\n");
+            for device in devices.iter() {
+                let name = device.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown");
+                let runtime = device.get("runtime").and_then(|v| v.as_str()).unwrap_or("");
+                let state = device.get("state").and_then(|v| v.as_str()).unwrap_or("Unknown");
+                let udid = device.get("udid").and_then(|v| v.as_str()).unwrap_or("");
+                let state_indicator = if state == "Booted" {
+                    color::green("●")
+                } else {
+                    color::dim("○")
+                };
+                println!("  {} {} (iOS {})", state_indicator, name, runtime);
+                println!("    {}", color::dim(udid));
+            }
+            return;
+        }
         // Tabs
         if let Some(tabs) = data.get("tabs").and_then(|v| v.as_array()) {
             for (i, tab) in tabs.iter().enumerate() {
