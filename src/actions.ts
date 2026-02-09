@@ -621,10 +621,11 @@ async function handleEvaluate(
   command: EvaluateCommand,
   browser: BrowserManager
 ): Promise<Response<EvaluateData>> {
-  const page = browser.getPage();
+  // Use getFrame() to support eval inside iframes when frame is selected
+  const frame = browser.getFrame();
 
   // Evaluate the script directly as a string expression
-  const result = await page.evaluate(command.script);
+  const result = await frame.evaluate(command.script);
 
   return successResponse(command.id, { result });
 }
@@ -1574,8 +1575,9 @@ async function handleEvalHandle(
   command: Command & { action: 'evalhandle'; script: string },
   browser: BrowserManager
 ): Promise<Response> {
-  const page = browser.getPage();
-  const handle = await page.evaluateHandle(command.script);
+  // Use getFrame() to support eval inside iframes when frame is selected
+  const frame = browser.getFrame();
+  const handle = await frame.evaluateHandle(command.script);
   const result = await handle.jsonValue().catch(() => 'Handle (non-serializable)');
   return successResponse(command.id, { result });
 }
