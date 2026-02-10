@@ -1281,11 +1281,19 @@ export class BrowserManager {
    * This handles pages created externally (e.g., via target="_blank" links)
    */
   private setupContextTracking(context: BrowserContext): void {
-    context.on('page', (page) => {
+    context.on('page', async (page) => {
       // Only add if not already tracked (avoids duplicates when newTab() creates pages)
       if (!this.pages.includes(page)) {
         this.pages.push(page);
         this.setupPageTracking(page);
+
+        // Auto-switch to the new popup page and wait for it to load
+        this.activePageIndex = this.pages.length - 1;
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+        } catch {
+          // Timeout is acceptable - page may take long to load
+        }
       }
     });
   }
